@@ -1,0 +1,7 @@
+{
+  "name": "Copy of CaseCraft Pro - Truth Repo Edition",
+  "description": "Professional legal evidence management with TruthTrack™ technology and voice-enabled Smart Sticky notes.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}

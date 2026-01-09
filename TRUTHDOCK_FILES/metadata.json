@@ -1,0 +1,7 @@
+{
+  "name": "Copy of ProSePower Vox Panel",
+  "description": "A vintage tube amplifier-inspired floating panel for legal case preparation, featuring conflict analysis, terminal commands, and seamless input integration.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
