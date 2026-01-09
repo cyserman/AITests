@@ -11,6 +11,7 @@ import { MotionBuilder } from './components/MotionBuilder';
 import { SmartSticky } from './components/SmartSticky';
 import { FloatingEvidenceConsole } from './components/FloatingEvidenceConsole';
 import { LiveAdvocateView } from './components/LiveAdvocateView';
+import { TruthDockPanel } from './components/TruthDockPanel';
 import { ActiveLayer, EvidenceItem, EvidenceType, StickyNote, VerificationStatus, NarrativeEvent, Lane } from './types';
 
 const MOCK_EVIDENCE: EvidenceItem[] = [
@@ -55,6 +56,7 @@ export default function App() {
   const [isSidebarOpen, setSidebarOpen] = useState(true);
   const [stickyNotes, setStickyNotes] = useState<StickyNote[]>([]);
   const [isConsoleOpen, setIsConsoleOpen] = useState(false);
+  const [isTruthDockOpen, setIsTruthDockOpen] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem('CASE_CRAFT_STATE_V3');
@@ -79,7 +81,7 @@ export default function App() {
   };
 
   const toggleTimeline = (id: string) => {
-    setEvidence(prev => prev.map(item => 
+    setEvidence(prev => prev.map(item =>
       item.id === id ? { ...item, isInTimeline: !item.isInTimeline } : item
     ));
   };
@@ -118,7 +120,7 @@ export default function App() {
     if (rows.length < 2) return;
 
     const headers = rows[0].map(h => h.toLowerCase().trim());
-    
+
     const newItems: EvidenceItem[] = rows.slice(1).map((parts, idx) => {
       if (parts.length < 3) return null;
 
@@ -130,9 +132,9 @@ export default function App() {
       const dateStr = getVal('date');
       const timestamp = dateStr ? new Date(dateStr).toISOString() : new Date().toISOString();
       const typeStr = getVal('event_type').toUpperCase();
-      
-      const type = (Object.values(EvidenceType).includes(typeStr as EvidenceType)) 
-        ? typeStr as EvidenceType 
+
+      const type = (Object.values(EvidenceType).includes(typeStr as EvidenceType))
+        ? typeStr as EvidenceType
         : EvidenceType.INCIDENT;
 
       return {
@@ -153,7 +155,7 @@ export default function App() {
         exhibitCode: getVal('exhibit_refs')
       };
     }).filter(Boolean) as EvidenceItem[];
-    
+
     setEvidence(prev => [...prev, ...newItems]);
     alert(`TruthTrack™ Sync Complete: ${newItems.length} records promoted to Vault.`);
   };
@@ -171,14 +173,14 @@ M-003,2024-01-20,DOCUMENT,Medical Bill,"Unpaid medical invoice sent via email.",
       case ActiveLayer.SPINE:
         return <SpineView evidence={evidence} onToggleTimeline={toggleTimeline} onUpdateEvidence={updateEvidence} />;
       case ActiveLayer.TIMELINE:
-        return <TimelineView 
-          evidence={evidence.filter(e => e.isInTimeline)} 
+        return <TimelineView
+          evidence={evidence.filter(e => e.isInTimeline)}
           narrativeEvents={narrativeEvents}
-          onUpdateEvidence={updateEvidence} 
+          onUpdateEvidence={updateEvidence}
           onUpdateNarrative={setNarrativeEvents}
         />;
       case ActiveLayer.NOTES:
-        return <StickyNotesView evidence={evidence} onUpdateNotes={(id, notes) => updateEvidence({...evidence.find(e => e.id === id)!, notes})} />;
+        return <StickyNotesView evidence={evidence} onUpdateNotes={(id, notes) => updateEvidence({ ...evidence.find(e => e.id === id)!, notes })} />;
       case ActiveLayer.AI:
         return <AIAnalysisView evidence={evidence} />;
       case ActiveLayer.LIVE:
@@ -193,13 +195,14 @@ M-003,2024-01-20,DOCUMENT,Medical Bill,"Unpaid medical invoice sent via email.",
   };
 
   return (
-    <Layout 
-      activeLayer={activeLayer} 
-      setActiveLayer={setActiveLayer} 
-      isSidebarOpen={isSidebarOpen} 
+    <Layout
+      activeLayer={activeLayer}
+      setActiveLayer={setActiveLayer}
+      isSidebarOpen={isSidebarOpen}
       setSidebarOpen={setSidebarOpen}
       onImport={handleImportCSV}
       onOpenConsole={() => setIsConsoleOpen(true)}
+      onOpenTruthDock={() => setIsTruthDockOpen(true)}
     >
       <div className="p-6 h-full overflow-y-auto relative bg-[#f8fafc]">
         {/* Mobile Sync Quick Action */}
@@ -212,7 +215,7 @@ M-003,2024-01-20,DOCUMENT,Medical Bill,"Unpaid medical invoice sent via email.",
                 <p className="text-[10px] opacity-80">Populate the Truth Spine with normalized mobile data.</p>
               </div>
             </div>
-            <button 
+            <button
               onClick={loadSampleMobileData}
               className="px-4 py-2 bg-white text-blue-600 rounded font-black text-[10px] uppercase tracking-widest hover:bg-slate-100 transition-colors"
             >
@@ -223,7 +226,7 @@ M-003,2024-01-20,DOCUMENT,Medical Bill,"Unpaid medical invoice sent via email.",
 
         {renderContent()}
 
-        <button 
+        <button
           onClick={addStickyNote}
           className="fixed bottom-8 right-24 w-14 h-14 bg-yellow-400 text-yellow-900 rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-transform z-[999] border-4 border-white"
           title="Add Sticky Note"
@@ -234,11 +237,12 @@ M-003,2024-01-20,DOCUMENT,Medical Bill,"Unpaid medical invoice sent via email.",
         </button>
 
         {isConsoleOpen && <FloatingEvidenceConsole evidence={evidence} onClose={() => setIsConsoleOpen(false)} />}
-        
+        {isTruthDockOpen && <TruthDockPanel isOpen={isTruthDockOpen} onClose={() => setIsTruthDockOpen(false)} />}
+
         {stickyNotes.map(note => (
-          <SmartSticky 
-            key={note.id} 
-            {...note} 
+          <SmartSticky
+            key={note.id}
+            {...note}
             onUpdate={(updated) => setStickyNotes(prev => prev.map(n => n.id === updated.id ? updated : n))}
             onDelete={(id) => setStickyNotes(prev => prev.filter(n => n.id !== id))}
           />

@@ -10,16 +10,18 @@ interface LayoutProps {
   setSidebarOpen: (open: boolean) => void;
   onImport: (content: string) => void;
   onOpenConsole: () => void;
+  onOpenTruthDock?: () => void;
 }
 
-export const Layout: React.FC<LayoutProps> = ({ 
-  children, 
-  activeLayer, 
+export const Layout: React.FC<LayoutProps> = ({
+  children,
+  activeLayer,
   setActiveLayer,
   isSidebarOpen,
   setSidebarOpen,
   onImport,
-  onOpenConsole
+  onOpenConsole,
+  onOpenTruthDock
 }) => {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -68,9 +70,8 @@ export const Layout: React.FC<LayoutProps> = ({
             <button
               key={item.id}
               onClick={() => setActiveLayer(item.id)}
-              className={`w-full flex items-center p-3 rounded-lg transition-all group ${
-                activeLayer === item.id ? 'bg-blue-600 shadow-lg text-white' : 'hover:bg-slate-800 text-slate-400'
-              }`}
+              className={`w-full flex items-center p-3 rounded-lg transition-all group ${activeLayer === item.id ? 'bg-blue-600 shadow-lg text-white' : 'hover:bg-slate-800 text-slate-400'
+                }`}
             >
               <svg className={`w-6 h-6 flex-shrink-0 ${activeLayer === item.id ? 'text-white' : 'text-slate-500 group-hover:text-blue-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
@@ -85,10 +86,10 @@ export const Layout: React.FC<LayoutProps> = ({
           ))}
         </nav>
         <div className="p-4 border-t border-slate-800">
-           <div className="flex items-center space-x-2 text-slate-500 hover:text-white cursor-pointer transition-colors" onClick={onOpenConsole}>
-              <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
-              <span className="text-[10px] font-bold uppercase tracking-widest">TruthTrack™ Engine Active</span>
-           </div>
+          <div className="flex items-center space-x-2 text-slate-500 hover:text-white cursor-pointer transition-colors" onClick={onOpenConsole}>
+            <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
+            <span className="text-[10px] font-bold uppercase tracking-widest">TruthTrack™ Engine Active</span>
+          </div>
         </div>
       </aside>
       <main className="flex-1 flex flex-col h-full overflow-hidden">
@@ -98,8 +99,16 @@ export const Layout: React.FC<LayoutProps> = ({
             <p className="text-[10px] text-slate-500">Secure Environment • Forensic Mode</p>
           </div>
           <div className="flex items-center space-x-4">
-             <button onClick={() => fileInputRef.current?.click()} className="px-4 py-2 bg-slate-900 text-white rounded text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 transition-colors">Import Evidence</button>
-             <button onClick={onOpenConsole} className="px-4 py-2 border border-slate-200 text-slate-700 rounded text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-colors">Exhibit Console</button>
+            {onOpenTruthDock && (
+              <button onClick={onOpenTruthDock} className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[10px] font-black uppercase tracking-widest transition-colors flex items-center gap-2">
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                </svg>
+                TruthDock
+              </button>
+            )}
+            <button onClick={() => fileInputRef.current?.click()} className="px-4 py-2 bg-slate-900 text-white rounded text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 transition-colors">Import Evidence</button>
+            <button onClick={onOpenConsole} className="px-4 py-2 border border-slate-200 text-slate-700 rounded text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-colors">Exhibit Console</button>
           </div>
         </header>
         <div className="flex-1 overflow-hidden relative">{children}</div>
