@@ -180,7 +180,11 @@ M-003,2024-01-20,DOCUMENT,Medical Bill,"Unpaid medical invoice sent via email.",
           onUpdateNarrative={setNarrativeEvents}
         />;
       case ActiveLayer.NOTES:
-        return <StickyNotesView evidence={evidence} onUpdateNotes={(id, notes) => updateEvidence({ ...evidence.find(e => e.id === id)!, notes })} />;
+        return <StickyNotesView evidence={evidence} onUpdateNotes={(id, notes) => {
+          const item = evidence.find(e => e.id === id);
+          if (!item) return;
+          updateEvidence({ ...item, notes });
+        }} />;
       case ActiveLayer.AI:
         return <AIAnalysisView evidence={evidence} />;
       case ActiveLayer.LIVE:
@@ -188,7 +192,7 @@ M-003,2024-01-20,DOCUMENT,Medical Bill,"Unpaid medical invoice sent via email.",
       case ActiveLayer.KNOWLEDGE:
         return <KnowledgeBase />;
       case ActiveLayer.MOTIONS:
-        return <MotionBuilder evidence={evidence.filter(e => e.isInTimeline && e.contentNeutral)} />;
+        return <MotionBuilder evidence={evidence.filter(e => e.isInTimeline && (e.contentNeutral || e.content))} />;
       default:
         return <Dashboard evidence={evidence} />;
     }

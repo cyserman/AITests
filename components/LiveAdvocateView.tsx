@@ -18,7 +18,7 @@ export const LiveAdvocateView: React.FC<LiveAdvocateViewProps> = ({ evidence }) 
   const [insights, setInsights] = useState<Insight[]>([]);
   const [status, setStatus] = useState<'IDLE' | 'CONNECTING' | 'LISTENING' | 'ERROR'>('IDLE');
   const [visualizerData, setVisualizerData] = useState<number[]>(new Array(24).fill(0));
-  
+
   const audioContextRef = useRef<{ input: AudioContext; output: AudioContext } | null>(null);
   const sessionRef = useRef<any>(null);
   const sourcesRef = useRef<Set<AudioBufferSourceNode>>(new Set());
@@ -84,14 +84,17 @@ export const LiveAdvocateView: React.FC<LiveAdvocateViewProps> = ({ evidence }) 
   const startLive = async () => {
     setStatus('CONNECTING');
     setIsActive(true);
-    
+
     try {
       const inputAudioContext = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 16000 });
       const outputAudioContext = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
       audioContextRef.current = { input: inputAudioContext, output: outputAudioContext };
 
+      if (!process.env.API_KEY) {
+        throw new Error("Missing GEMINI_API_KEY environment variable");
+      }
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      
+
       const queryTruthSpineTool: FunctionDeclaration = {
         name: 'queryTruthSpine',
         parameters: {
@@ -105,7 +108,7 @@ export const LiveAdvocateView: React.FC<LiveAdvocateViewProps> = ({ evidence }) 
       };
 
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      
+
       const sessionPromise = ai.live.connect({
         model: 'gemini-2.5-flash-native-audio-preview-12-2025',
         callbacks: {
@@ -113,13 +116,13 @@ export const LiveAdvocateView: React.FC<LiveAdvocateViewProps> = ({ evidence }) 
             setStatus('LISTENING');
             const source = inputAudioContext.createMediaStreamSource(stream);
             const scriptProcessor = inputAudioContext.createScriptProcessor(4096, 1, 1);
-            
+
             // Visualizer logic for that "Courtroom Monitor" vibe
             const analyzer = inputAudioContext.createAnalyser();
             analyzer.fftSize = 64;
             source.connect(analyzer);
             const dataArray = new Uint8Array(analyzer.frequencyBinCount);
-            
+
             const updateVisualizer = () => {
               analyzer.getByteFrequencyData(dataArray);
               const scaled = Array.from(dataArray.slice(0, 24)).map(v => v / 255);
@@ -147,13 +150,13 @@ export const LiveAdvocateView: React.FC<LiveAdvocateViewProps> = ({ evidence }) 
           onmessage: async (message: LiveServerMessage) => {
             // Handle Transcriptions
             if (message.serverContent?.outputTranscription) {
-               const text = message.serverContent.outputTranscription.text;
-               setInsights(prev => [...prev.slice(-100), {
-                 id: Math.random().toString(),
-                 timestamp: new Date(),
-                 type: 'TRANSCRIPT',
-                 text
-               }]);
+              const text = message.serverContent.outputTranscription.text;
+              setInsights(prev => [...prev.slice(-100), {
+                id: Math.random().toString(),
+                timestamp: new Date(),
+                type: 'TRANSCRIPT',
+                text
+              }]);
             }
 
             // Handle Tool Calls (Querying the "Truth Spine")
@@ -161,14 +164,14 @@ export const LiveAdvocateView: React.FC<LiveAdvocateViewProps> = ({ evidence }) 
               for (const fc of message.toolCall.functionCalls) {
                 if (fc.name === 'queryTruthSpine') {
                   const q = (fc.args as any).query.toLowerCase();
-                  const results = evidence.filter(e => 
-                    e.content.toLowerCase().includes(q) || 
+                  const results = evidence.filter(e =>
+                    e.content.toLowerCase().includes(q) ||
                     e.sender.toLowerCase().includes(q)
                   );
-                  const resultStr = results.length > 0 
+                  const resultStr = results.length > 0
                     ? `Found ${results.length} matches in Truth Spine: ` + results.map(r => `[${new Date(r.timestamp).toLocaleDateString()}] ${r.sender}: ${r.content}`).join('; ')
                     : "No matching records found in the Truth Spine for this claim.";
-                  
+
                   sessionPromise.then(session => session.sendToolResponse({
                     functionResponses: { id: fc.id, name: fc.name, response: { result: resultStr } }
                   }));
@@ -243,46 +246,44 @@ export const LiveAdvocateView: React.FC<LiveAdvocateViewProps> = ({ evidence }) 
       {/* Courtroom Monitor HUD */}
       <div className="p-8 border-b border-white/5 relative bg-[#0f172a] shadow-2xl">
         <div className="absolute top-0 right-0 p-8 opacity-5">
-           <svg className="w-64 h-64" fill="currentColor" viewBox="0 0 24 24">
-             <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
-             <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
-           </svg>
+          <svg className="w-64 h-64" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" />
+            <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z" />
+          </svg>
         </div>
-        
+
         <div className="relative z-10 flex justify-between items-center">
           <div>
             <div className="flex items-center space-x-2 mb-2">
               <span className="px-2 py-0.5 bg-blue-500/20 text-blue-400 text-[9px] font-black rounded uppercase tracking-widest border border-blue-500/30">TruthTrack™ Session: ACTIVE</span>
-              <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest border ${
-                status === 'LISTENING' ? 'bg-red-500/20 text-red-400 border-red-500/30 animate-pulse' : 'bg-slate-500/20 text-slate-400 border-slate-500/30'
-              }`}>
+              <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest border ${status === 'LISTENING' ? 'bg-red-500/20 text-red-400 border-red-500/30 animate-pulse' : 'bg-slate-500/20 text-slate-400 border-slate-500/30'
+                }`}>
                 {status}
               </span>
             </div>
             <h2 className="text-3xl font-black uppercase tracking-tighter leading-none">Live Advocate Monitor</h2>
             <p className="text-[10px] text-slate-500 mt-2 font-bold uppercase tracking-widest">Real-Time Forensic Surveillance & Strategic Correction</p>
           </div>
-          
+
           <div className="flex items-center space-x-6">
             {isActive && (
               <div className="flex items-end space-x-1 h-8 px-8 border-x border-white/10">
                 {visualizerData.map((val, i) => (
-                  <div 
-                    key={i} 
-                    className="w-1 bg-blue-400 rounded-full transition-all duration-75" 
+                  <div
+                    key={i}
+                    className="w-1 bg-blue-400 rounded-full transition-all duration-75"
                     style={{ height: `${Math.max(15, val * 100)}%`, opacity: 0.2 + val * 0.8 }}
                   ></div>
                 ))}
               </div>
             )}
-            
-            <button 
+
+            <button
               onClick={isActive ? stopLive : startLive}
-              className={`px-10 py-4 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all shadow-2xl active:scale-95 ${
-                isActive 
-                ? 'bg-red-600 hover:bg-red-700 text-white' 
-                : 'bg-blue-600 hover:bg-blue-700 text-white'
-              }`}
+              className={`px-10 py-4 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all shadow-2xl active:scale-95 ${isActive
+                  ? 'bg-red-600 hover:bg-red-700 text-white'
+                  : 'bg-blue-600 hover:bg-blue-700 text-white'
+                }`}
             >
               {isActive ? 'Cease Surveillance' : 'Engage Monitor'}
             </button>
@@ -295,19 +296,19 @@ export const LiveAdvocateView: React.FC<LiveAdvocateViewProps> = ({ evidence }) 
         {/* Transcript Panel (Room Feed) */}
         <div className="bg-[#111827] flex flex-col overflow-hidden">
           <div className="p-4 border-b border-white/5 flex justify-between items-center bg-[#0f172a] px-6">
-             <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Audio Stream Transcript</span>
-             <span className="text-[8px] font-mono text-white/20 uppercase tracking-widest">Montgomery County Courtroom Feed</span>
+            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Audio Stream Transcript</span>
+            <span className="text-[8px] font-mono text-white/20 uppercase tracking-widest">Montgomery County Courtroom Feed</span>
           </div>
           <div className="flex-1 overflow-y-auto p-8 space-y-6 custom-scrollbar-dark">
             {insights.filter(i => i.type === 'TRANSCRIPT').map(insight => (
               <div key={insight.id} className="text-[13px] text-slate-400 border-l-2 border-white/10 pl-6 py-1 leading-relaxed animate-fadeIn">
-                <span className="text-[9px] font-mono text-white/10 block mb-1">{insight.timestamp.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'})}</span>
+                <span className="text-[9px] font-mono text-white/10 block mb-1">{insight.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span>
                 {insight.text}
               </div>
             ))}
             {insights.filter(i => i.type === 'TRANSCRIPT').length === 0 && (
               <div className="h-full flex flex-col items-center justify-center text-slate-700/50">
-                <svg className="w-12 h-12 mb-4 opacity-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/></svg>
+                <svg className="w-12 h-12 mb-4 opacity-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
                 <p className="text-[9px] uppercase font-black tracking-widest">No Incoming Audio Signal Detected</p>
               </div>
             )}
@@ -317,18 +318,17 @@ export const LiveAdvocateView: React.FC<LiveAdvocateViewProps> = ({ evidence }) 
         {/* Audit Panel (Pattern Guard) */}
         <div className="bg-[#0f172a] flex flex-col overflow-hidden border-l border-white/5">
           <div className="p-4 border-b border-white/5 flex justify-between items-center bg-[#111827] px-6">
-             <span className="text-[10px] font-black uppercase tracking-widest text-orange-400">Strategic Pattern Audit</span>
-             <span className="px-2 py-0.5 bg-orange-500/20 text-orange-400 text-[8px] font-black rounded uppercase">Truth Spine Shield</span>
+            <span className="text-[10px] font-black uppercase tracking-widest text-orange-400">Strategic Pattern Audit</span>
+            <span className="px-2 py-0.5 bg-orange-500/20 text-orange-400 text-[8px] font-black rounded uppercase">Truth Spine Shield</span>
           </div>
           <div className="flex-1 overflow-y-auto p-8 space-y-4 custom-scrollbar-dark">
             {insights.filter(i => i.type !== 'TRANSCRIPT').map(insight => (
-              <div 
-                key={insight.id} 
-                className={`p-6 rounded-2xl border-l-4 shadow-2xl animate-slideInRight ${
-                  insight.type === 'CONTRADICTION' 
-                  ? 'bg-red-500/5 border-red-500' 
-                  : 'bg-blue-500/5 border-blue-500'
-                }`}
+              <div
+                key={insight.id}
+                className={`p-6 rounded-2xl border-l-4 shadow-2xl animate-slideInRight ${insight.type === 'CONTRADICTION'
+                    ? 'bg-red-500/5 border-red-500'
+                    : 'bg-blue-500/5 border-blue-500'
+                  }`}
               >
                 <div className="flex justify-between items-center mb-3">
                   <span className={`text-[10px] font-black uppercase tracking-widest ${insight.type === 'CONTRADICTION' ? 'text-red-400' : 'text-blue-400'}`}>
@@ -357,16 +357,16 @@ export const LiveAdvocateView: React.FC<LiveAdvocateViewProps> = ({ evidence }) 
 
       {/* Forensic Telemetry Footer */}
       <div className="p-4 bg-[#0f172a] border-t border-white/5 flex items-center justify-between px-8">
-         <div className="flex items-center space-x-6 text-slate-500">
-           <div className="flex items-center space-x-2">
-             <div className={`w-2 h-2 rounded-full ${isActive ? 'bg-green-500 animate-pulse' : 'bg-white/10'}`}></div>
-             <span className="text-[9px] font-black uppercase tracking-widest">Tether: {isActive ? 'SECURE' : 'IDLE'}</span>
-           </div>
-           <span className="text-[9px] font-black uppercase tracking-widest">SHA-256 SESSION: {Math.random().toString(36).substring(7).toUpperCase()}</span>
-         </div>
-         <div className="text-[9px] font-mono text-white/20 uppercase">
-            Advocate Engine: 2.5-FLASH-NATIVE-AUDIO • COURTROOM MODE
-         </div>
+        <div className="flex items-center space-x-6 text-slate-500">
+          <div className="flex items-center space-x-2">
+            <div className={`w-2 h-2 rounded-full ${isActive ? 'bg-green-500 animate-pulse' : 'bg-white/10'}`}></div>
+            <span className="text-[9px] font-black uppercase tracking-widest">Tether: {isActive ? 'SECURE' : 'IDLE'}</span>
+          </div>
+          <span className="text-[9px] font-black uppercase tracking-widest">SHA-256 SESSION: {Math.random().toString(36).substring(7).toUpperCase()}</span>
+        </div>
+        <div className="text-[9px] font-mono text-white/20 uppercase">
+          Advocate Engine: 2.5-FLASH-NATIVE-AUDIO • COURTROOM MODE
+        </div>
       </div>
     </div>
   );

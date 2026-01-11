@@ -1,6 +1,11 @@
 import { GoogleGenAI, Type } from "@google/genai";
 
-const getAi = () => new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+const getAi = () => {
+    if (!process.env.API_KEY) {
+        throw new Error("Missing GEMINI_API_KEY environment variable");
+    }
+    return new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+};
 
 export interface ConflictItem {
     id: string;
@@ -38,7 +43,7 @@ export const analyzeConflicts = async (content: string): Promise<ConflictItem[]>
     try {
         const ai = getAi();
         const response = await ai.models.generateContent({
-            model: 'gemini-3-flash-preview',
+            model: 'gemini-1.5-flash',
             contents: `Analyze these legal statements for contradictions and truth gaps. Return a JSON array. Content: ${content}`,
             config: {
                 responseMimeType: "application/json",
@@ -75,7 +80,7 @@ export const chatWithSearch = async (
     try {
         const ai = getAi();
         const response = await ai.models.generateContent({
-            model: 'gemini-3-flash-preview',
+            model: 'gemini-1.5-flash',
             contents: [...history, { role: 'user', parts: [{ text: query }] }],
             config: { tools: [{ googleSearch: {} }] }
         });
@@ -98,7 +103,7 @@ export const structureNarrativeToJSON = async (rawContent: string): Promise<Proc
     try {
         const ai = getAi();
         const response = await ai.models.generateContent({
-            model: 'gemini-3-flash-preview',
+            model: 'gemini-1.5-flash',
             contents: `Transform this raw narrative into structured legal records for Litigation Abuse, Economic Sabotage, Emotional Alienation, and Bad Faith Allegations. Content: ${rawContent}`,
             config: {
                 responseMimeType: "application/json",
@@ -133,7 +138,7 @@ export const getLegalSuggestions = async (notes: string): Promise<Suggestion[]> 
     try {
         const ai = getAi();
         const response = await ai.models.generateContent({
-            model: 'gemini-3-flash-preview',
+            model: 'gemini-1.5-flash',
             contents: `Review these legal case notes. Suggest missing documents and highlight areas needing clarification. Return a JSON array. Notes: ${notes}`,
             config: {
                 responseMimeType: "application/json",
