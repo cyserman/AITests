@@ -19,14 +19,54 @@ export const MotionBuilder: React.FC<MotionBuilderProps> = ({ evidence }) => {
   const generateMarkdown = () => {
     return `
 # IN THE COURT OF COMMON PLEAS OF MONTGOMERY COUNTY, PENNSYLVANIA
-## ${motionType.toUpperCase()}
+
+## MOTION FOR ${motionType.toUpperCase()}
+
+**Petitioner:** [Your Name]
+**Respondent:** [Respondent Name]
+**Case No.:** [Case Number]
+**Filed:** ${new Date().toLocaleDateString()}
+
+---
 
 ### STATEMENT OF FACTS
 
-${selectedEvidence.map((e, idx) => `${idx + 1}. On ${new Date(e.timestamp).toLocaleDateString()}, ${e.contentNeutral || e.content} (See Exhibit ${e.exhibitCode || e.id}).`).join('\n\n')}
+${selectedEvidence.map((e, idx) => {
+      const date = new Date(e.timestamp).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+      const content = e.contentNeutral || e.content;
+      const exhibit = e.exhibitCode || e.id;
+      const source = e.source ? ` (Source: ${e.source})` : '';
+      const notes = e.notes ? `\n   *Note: ${e.notes}*` : '';
+
+      return `${idx + 1}. **${date}** - ${e.sender}
+   ${content}
+   **[See Exhibit ${exhibit}]**${source}${notes}`;
+    }).join('\n\n')}
+
+---
 
 ### ARGUMENT
-The pattern of evidence demonstrates a manufactured imbalance in custodial access...
+
+The foregoing evidence demonstrates a clear pattern of [describe pattern]. Specifically:
+
+${selectedEvidence.map((e, idx) => {
+      const exhibit = e.exhibitCode || e.id;
+      return `- Exhibit ${exhibit} establishes ${e.sender.toLowerCase()}`;
+    }).join('\n')}
+
+This pattern supports the relief requested herein.
+
+---
+
+### WHEREFORE
+
+Petitioner respectfully requests that this Honorable Court grant the relief requested in this Motion.
+
+Respectfully submitted,
+
+_________________________
+[Your Name]
+Pro Se Petitioner
     `.trim();
   };
 

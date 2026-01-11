@@ -11,6 +11,7 @@ import { MotionBuilder } from './components/MotionBuilder';
 import { SmartSticky } from './components/SmartSticky';
 import { FloatingEvidenceConsole } from './components/FloatingEvidenceConsole';
 import { LiveAdvocateView } from './components/LiveAdvocateView';
+import { PDFConverter } from './components/PDFConverter';
 import { ActiveLayer, EvidenceItem, EvidenceType, StickyNote, VerificationStatus, NarrativeEvent, Lane } from './types';
 
 // Your actual case data
@@ -238,6 +239,8 @@ export default function App() {
                 return <KnowledgeBase />;
             case ActiveLayer.MOTIONS:
                 return <MotionBuilder evidence={evidence.filter(e => e.isInTimeline && (e.contentNeutral || e.content))} />;
+            case ActiveLayer.PDF_CONVERTER:
+                return <PDFConverter />;
             default:
                 return <Dashboard evidence={evidence} />;
         }

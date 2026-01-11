@@ -22,7 +22,7 @@ export const AIAnalysisView: React.FC<AIAnalysisViewProps> = ({ evidence }) => {
     setError(null);
     try {
       const analysis = await analyzeEvidence(evidence);
-      setResult({...analysis, agentName: 'Advocate Prime Agent'});
+      setResult({ ...analysis, agentName: 'Advocate Prime Agent' });
     } catch (err) {
       setError("Analysis failed. Advocate connectivity interrupted.");
     } finally {
@@ -32,27 +32,58 @@ export const AIAnalysisView: React.FC<AIAnalysisViewProps> = ({ evidence }) => {
 
   const exportToNotebookLM = () => {
     if (!result) return;
-    const content = `# CaseTimeline: TruthTrack™ Advocate Analysis
-## Strategic Summary
-${result.summary}
 
-## "Say Less" Strategy
-${result.sayLessStrategy}
+    const schema = {
+      case: {
+        name: "Firey v. Firey",
+        court: "Court of Common Pleas of Montgomery County, Pennsylvania",
+        date: new Date().toISOString(),
+        type: "Custody Modification"
+      },
+      analysis: {
+        readinessScore: result.readinessScore,
+        summary: result.summary,
+        strategicAlignment: result.strategicAlignment,
+        sayLessStrategy: result.sayLessStrategy
+      },
+      conflicts: result.conflicts.map((conflict, idx) => ({
+        id: idx + 1,
+        severity: "high",
+        description: conflict
+      })),
+      suggestions: result.suggestions.map((suggestion, idx) => ({
+        id: idx + 1,
+        type: "strategic",
+        recommendation: suggestion
+      })),
+      evidence: evidence.map(e => ({
+        id: e.id,
+        date: e.timestamp,
+        type: e.type,
+        title: e.sender,
+        content: e.content,
+        exhibit: e.exhibitCode,
+        source: e.source,
+        reliability: e.reliability,
+        verified: e.verified,
+        hash: e.hash,
+        notes: e.notes,
+        lane: e.lane,
+        tags: e.tags
+      })),
+      metadata: {
+        generatedBy: "CaseCraft TruthTrack™ AI",
+        agent: result.agentName || "Advocate Prime",
+        timestamp: new Date().toISOString(),
+        version: "2.0.0"
+      }
+    };
 
-## Identified Conflicts
-${result.conflicts.map(c => `- ${c}`).join('\n')}
-
-## Evidence Spine Excerpt
-${evidence.map(e => `### [${e.timestamp}] ${e.sender}
-- Hash: ${e.hash}
-- Content: ${e.content}
-`).join('\n')}
-`;
-    const blob = new Blob([content], { type: 'text/markdown' });
+    const blob = new Blob([JSON.stringify(schema, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `Advocate_Report_${new Date().toISOString().split('T')[0]}.md`;
+    a.download = `NotebookLM_CaseData_${new Date().toISOString().split('T')[0]}.json`;
     a.click();
   };
 
@@ -61,11 +92,11 @@ ${evidence.map(e => `### [${e.timestamp}] ${e.sender}
       <div className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-3">
         {agents.map(agent => (
           <div key={agent.id} className="bg-white p-3 rounded border border-slate-200 shadow-sm flex items-center space-x-3">
-             <div className={`w-1.5 h-1.5 rounded-full ${loading ? 'animate-pulse bg-blue-600' : 'bg-slate-300'}`}></div>
-             <div>
-               <p className="text-[10px] font-black text-slate-900 uppercase tracking-widest">{agent.name}</p>
-               <p className="text-[9px] text-slate-500 font-medium">{loading ? agent.task : 'Active'}</p>
-             </div>
+            <div className={`w-1.5 h-1.5 rounded-full ${loading ? 'animate-pulse bg-blue-600' : 'bg-slate-300'}`}></div>
+            <div>
+              <p className="text-[10px] font-black text-slate-900 uppercase tracking-widest">{agent.name}</p>
+              <p className="text-[9px] text-slate-500 font-medium">{loading ? agent.task : 'Active'}</p>
+            </div>
           </div>
         ))}
       </div>
@@ -77,7 +108,7 @@ ${evidence.map(e => `### [${e.timestamp}] ${e.sender}
             <p className="text-slate-400 text-xs font-medium">Executing 'Say Less' pattern recognition and conflict detection.</p>
           </div>
           {result && !loading && (
-            <button 
+            <button
               onClick={exportToNotebookLM}
               className="px-4 py-2 bg-blue-600 text-white rounded text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 transition-colors shadow-lg"
             >
@@ -97,10 +128,10 @@ ${evidence.map(e => `### [${e.timestamp}] ${e.sender}
 
           {loading && (
             <div className="text-center py-20">
-               <div className="flex justify-center mb-6">
-                 <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-               </div>
-               <p className="text-slate-500 text-xs font-black uppercase tracking-widest">Cross-referencing Truth Spine with Legal Rules...</p>
+              <div className="flex justify-center mb-6">
+                <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+              </div>
+              <p className="text-slate-500 text-xs font-black uppercase tracking-widest">Cross-referencing Truth Spine with Legal Rules...</p>
             </div>
           )}
 
@@ -108,12 +139,12 @@ ${evidence.map(e => `### [${e.timestamp}] ${e.sender}
             <div className="space-y-8 animate-fadeIn">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="bg-slate-50 p-6 rounded border border-slate-100 text-center">
-                   <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Integrity Score</p>
-                   <p className="text-5xl font-black text-blue-600">{result.readinessScore}%</p>
+                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Integrity Score</p>
+                  <p className="text-5xl font-black text-blue-600">{result.readinessScore}%</p>
                 </div>
                 <div className="col-span-2 bg-slate-50 p-6 rounded border border-slate-100">
-                   <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">"Say Less" Strategic Summary</p>
-                   <p className="text-sm text-slate-800 leading-relaxed font-medium">"{result.sayLessStrategy}"</p>
+                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">"Say Less" Strategic Summary</p>
+                  <p className="text-sm text-slate-800 leading-relaxed font-medium">"{result.sayLessStrategy}"</p>
                 </div>
               </div>
 

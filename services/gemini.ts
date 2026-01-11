@@ -2,6 +2,9 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { EvidenceItem } from "../types";
 
+if (!process.env.API_KEY) {
+  throw new Error("Missing GEMINI_API_KEY environment variable");
+}
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 const SYSTEM_INSTRUCTION = `
@@ -20,7 +23,7 @@ const SYSTEM_INSTRUCTION = `
 export async function neutralizeText(text: string): Promise<string> {
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-1.5-flash",
       contents: `Neutralize this legal statement. Remove emotional framing. Distill the procedural beat: "${text}"`,
       config: { systemInstruction: SYSTEM_INSTRUCTION }
     });
@@ -46,7 +49,7 @@ export async function analyzeEvidence(evidence: EvidenceItem[]) {
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3-pro-preview",
+      model: "gemini-1.5-pro",
       contents: prompt,
       config: {
         systemInstruction: SYSTEM_INSTRUCTION,

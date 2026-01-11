@@ -59,7 +59,8 @@ export enum ActiveLayer {
   AI = 'AI',
   KNOWLEDGE = 'KNOWLEDGE',
   MOTIONS = 'MOTIONS',
-  LIVE = 'LIVE'
+  LIVE = 'LIVE',
+  PDF_CONVERTER = 'PDF_CONVERTER'
 }
 
 export interface AnalysisResult {
