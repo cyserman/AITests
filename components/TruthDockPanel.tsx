@@ -29,9 +29,10 @@ interface TerminalEntry {
 interface TruthDockPanelProps {
     isOpen: boolean;
     onClose: () => void;
+    evidence?: any[]; // Evidence from main app
 }
 
-export const TruthDockPanel: React.FC<TruthDockPanelProps> = ({ isOpen, onClose }) => {
+export const TruthDockPanel: React.FC<TruthDockPanelProps> = ({ isOpen, onClose, evidence = [] }) => {
     const [activeTab, setActiveTab] = useState<PanelTab>(PanelTab.NOTEPAD);
     const [isMinimized, setIsMinimized] = useState(false);
 
@@ -82,12 +83,43 @@ export const TruthDockPanel: React.FC<TruthDockPanelProps> = ({ isOpen, onClose 
         };
     }, [handleMouseMove, handleMouseUp]);
 
-    // Load spine items from database
+    // Load spine items from database AND sync from main app evidence
     useEffect(() => {
         if (isOpen) {
             loadSpineItems();
+            // Sync evidence from main app to database
+            if (evidence && evidence.length > 0) {
+                syncEvidenceToDatabase();
+            }
         }
-    }, [isOpen]);
+    }, [isOpen, evidence]);
+
+    const syncEvidenceToDatabase = async () => {
+        try {
+            // Only sync if there's evidence to sync
+            if (!evidence || evidence.length === 0) return;
+
+            for (const item of evidence) {
+                // Check if item already exists by hash
+                const existing = await db.spine.where('hash').equals(item.hash).first();
+                if (!existing) {
+                    // Only add if it doesn't exist - never overwrite user data
+                    await db.spine.add({
+                        fileName: item.exhibitCode || item.sender,
+                        contentOriginal: item.content,
+                        contentNeutral: item.contentNeutral,
+                        hash: item.hash,
+                        timestamp: new Date(item.timestamp).getTime(),
+                        verified: item.verified
+                    });
+                }
+            }
+            // Reload to show updated list
+            loadSpineItems();
+        } catch (e) {
+            console.error('Failed to sync evidence to TruthDock:', e);
+        }
+    };
 
     const loadSpineItems = async () => {
         const items = await db.spine.toArray();

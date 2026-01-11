@@ -51,7 +51,7 @@ const MOCK_EVIDENCE: EvidenceItem[] = [
 
 export default function App() {
   const [activeLayer, setActiveLayer] = useState<ActiveLayer>(ActiveLayer.SPINE);
-  const [evidence, setEvidence] = useState<EvidenceItem[]>(MOCK_EVIDENCE);
+  const [evidence, setEvidence] = useState<EvidenceItem[]>([]);
   const [narrativeEvents, setNarrativeEvents] = useState<NarrativeEvent[]>([]);
   const [isSidebarOpen, setSidebarOpen] = useState(true);
   const [stickyNotes, setStickyNotes] = useState<StickyNote[]>([]);
@@ -63,12 +63,18 @@ export default function App() {
     if (saved) {
       try {
         const { evidence: sE, notes: sN, narrative: sNav } = JSON.parse(saved);
-        setEvidence(sE || MOCK_EVIDENCE);
+        // Only load saved data if it exists, otherwise use empty arrays
+        setEvidence(sE && sE.length > 0 ? sE : []);
         setStickyNotes(sN || []);
         setNarrativeEvents(sNav || []);
       } catch (e) {
         console.error("Failed to load state", e);
+        // Start with empty state if load fails
+        setEvidence([]);
       }
+    } else {
+      // First time user - show welcome message but start empty
+      console.log("Welcome to CaseCraft Pro! Import your CSV or use the Mobile Sync feature to get started.");
     }
   }, []);
 
@@ -241,7 +247,7 @@ M-003,2024-01-20,DOCUMENT,Medical Bill,"Unpaid medical invoice sent via email.",
         </button>
 
         {isConsoleOpen && <FloatingEvidenceConsole evidence={evidence} onClose={() => setIsConsoleOpen(false)} />}
-        {isTruthDockOpen && <TruthDockPanel isOpen={isTruthDockOpen} onClose={() => setIsTruthDockOpen(false)} />}
+        {isTruthDockOpen && <TruthDockPanel isOpen={isTruthDockOpen} onClose={() => setIsTruthDockOpen(false)} evidence={evidence} />}
 
         {stickyNotes.map(note => (
           <SmartSticky

@@ -1,0 +1,101 @@
+{
+  "evidence": [
+    {
+      "id": "EVT-0001",
+      "type": "DOCUMENT",
+      "sender": "PFA order filed",
+      "content": "Protection From Abuse order filed. Includes EPFA and follow-on PFA activity.",
+      "timestamp": "2024-11-01T00:00:00.000Z",
+      "hash": "uggtxf",
+      "verified": true,
+      "verificationStatus": "VERIFIED",
+      "isInTimeline": true,
+      "exhibitCode": "PKT-001",
+      "lane": "PROCEDURAL",
+      "tags": [
+        "PFA"
+      ],
+      "reliability": "High",
+      "source": "Court filings",
+      "notes": "Removal and leverage origin point. Evidence includes filings, orders, CY-48 context, text deletions."
+    },
+    {
+      "id": "EVT-0002",
+      "type": "INCIDENT",
+      "sender": "Camper incident",
+      "content": "Law enforcement involved. Custody interference and setup alleged.",
+      "timestamp": "2024-11-23T00:00:00.000Z",
+      "hash": "fhuxng",
+      "verified": true,
+      "verificationStatus": "VERIFIED",
+      "isInTimeline": true,
+      "exhibitCode": "EVT-0002",
+      "lane": "CUSTODY",
+      "tags": [
+        "INCIDENT"
+      ],
+      "reliability": "High",
+      "source": "Law enforcement reports",
+      "notes": ""
+    },
+    {
+      "id": "EVT-0003",
+      "type": "INCIDENT",
+      "sender": "July 4th exchange incident",
+      "content": "Selective enforcement and rigidity demonstrated in holiday exchange.",
+      "timestamp": "2024-07-04T00:00:00.000Z",
+      "hash": "qnak0d",
+      "verified": true,
+      "verificationStatus": "VERIFIED",
+      "isInTimeline": true,
+      "exhibitCode": "CL-003",
+      "lane": "CUSTODY",
+      "tags": [
+        "EXCHANGE"
+      ],
+      "reliability": "High",
+      "source": "Call logs",
+      "notes": "Evidence includes communications, missed/blocked exchanges."
+    },
+    {
+      "id": "EVT-0004",
+      "type": "DOCUMENT",
+      "sender": "Counsel withdrawal",
+      "content": "Legal counsel withdrew from representation. Procedural disadvantage resulted.",
+      "timestamp": "2024-12-01T00:00:00.000Z",
+      "hash": "79jril",
+      "verified": true,
+      "verificationStatus": "VERIFIED",
+      "isInTimeline": true,
+      "exhibitCode": "EVT-0004",
+      "lane": "PROCEDURAL",
+      "tags": [
+        "COURT"
+      ],
+      "reliability": "High",
+      "source": "Court records",
+      "notes": "Evidence includes correspondence, docket entries, absence of filings."
+    },
+    {
+      "id": "EVT-0005",
+      "type": "INCIDENT",
+      "sender": "Christmas holiday denial",
+      "content": "Christmas holiday access denied. Status quo hardening demonstrated.",
+      "timestamp": "2024-12-25T00:00:00.000Z",
+      "hash": "95cw31",
+      "verified": true,
+      "verificationStatus": "VERIFIED",
+      "isInTimeline": true,
+      "exhibitCode": "EVT-0005",
+      "lane": "CUSTODY",
+      "tags": [
+        "EXCHANGE"
+      ],
+      "reliability": "High",
+      "source": "Call logs",
+      "notes": "Evidence includes call logs, AppClose blocks, holiday denial records."
+    }
+  ],
+  "notes": [],
+  "narrative": []
+}
