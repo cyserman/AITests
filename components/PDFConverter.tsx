@@ -3,11 +3,29 @@ import React, { useState } from 'react';
 export const PDFConverter: React.FC = () => {
     const [converting, setConverting] = useState(false);
     const [result, setResult] = useState<string | null>(null);
+    const [pastedText, setPastedText] = useState('');
+
+    const handleTextConvert = () => {
+        if (!pastedText.trim()) {
+            alert('Please paste some text first');
+            return;
+        }
+
+        setConverting(true);
+
+        // Create CSV from pasted text
+        const csvHeader = 'event_id,date,event_type,short_title,description,source,exhibit_refs,reliability,notes\n';
+        const csvRow = `PASTE-${Date.now()},${new Date().toISOString().split('T')[0]},DOCUMENT,"Pasted Text","${pastedText.substring(0, 2000).replace(/"/g, '""').replace(/\n/g, ' ')}","Manual Paste","PASTE-${Date.now()}",High,"Pasted from clipboard"`;
+
+        const csvContent = csvHeader + csvRow;
+        setResult(csvContent);
+        setConverting(false);
+    };
 
     const handlePDFUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (!file || file.type !== 'application/pdf') {
-            alert('Please select a PDF file');
+        if (!file) {
+            alert('Please select a file');
             return;
         }
 
@@ -15,6 +33,27 @@ export const PDFConverter: React.FC = () => {
         setResult(null);
 
         try {
+            // Handle TXT files (NotebookLM exports, etc.)
+            if (file.type === 'text/plain' || file.name.endsWith('.txt')) {
+                const text = await file.text();
+
+                // Create CSV format from text
+                const csvHeader = 'event_id,date,event_type,short_title,description,source,exhibit_refs,reliability,notes\n';
+                const csvRow = `TXT-${Date.now()},${new Date().toISOString().split('T')[0]},DOCUMENT,"${file.name}","${text.substring(0, 2000).replace(/"/g, '""').replace(/\n/g, ' ')}","NotebookLM Export","TXT-${Date.now()}",High,"Imported from ${file.name}"`;
+
+                const csvContent = csvHeader + csvRow;
+                setResult(csvContent);
+                setConverting(false);
+                return;
+            }
+
+            // Handle PDF files
+            if (file.type !== 'application/pdf') {
+                alert('Please select a PDF or TXT file');
+                setConverting(false);
+                return;
+            }
+
             const arrayBuffer = await file.arrayBuffer();
             const pdfjsLib = (window as any).pdfjsLib;
 
@@ -41,8 +80,8 @@ export const PDFConverter: React.FC = () => {
             const csvContent = csvHeader + csvRow;
             setResult(csvContent);
         } catch (err) {
-            alert('Failed to convert PDF. Please try a different file.');
-            console.error('PDF Conversion Error:', err);
+            alert('Failed to convert file. Please try a different file.');
+            console.error('Conversion Error:', err);
         } finally {
             setConverting(false);
         }
@@ -74,10 +113,42 @@ export const PDFConverter: React.FC = () => {
                 </div>
 
                 <div className="p-8 space-y-6">
+                    {/* Paste Text Section */}
+                    <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-6 border-2 border-green-200">
+                        <h3 className="text-sm font-black uppercase text-green-800 mb-3 flex items-center gap-2">
+                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
+                                <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
+                            </svg>
+                            Paste Text (NotebookLM, etc.)
+                        </h3>
+                        <textarea
+                            value={pastedText}
+                            onChange={(e) => setPastedText(e.target.value)}
+                            placeholder="Paste your NotebookLM output, text messages, or any text here..."
+                            className="w-full h-40 p-4 border-2 border-green-300 rounded-lg font-mono text-sm resize-none focus:outline-none focus:border-green-500 bg-white"
+                        />
+                        <button
+                            onClick={handleTextConvert}
+                            disabled={!pastedText.trim()}
+                            className="mt-3 w-full px-6 py-3 bg-green-600 text-white rounded-lg font-bold uppercase tracking-wide hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            Convert Pasted Text to CSV
+                        </button>
+                    </div>
+
+                    {/* Divider */}
+                    <div className="flex items-center gap-4">
+                        <div className="flex-1 border-t border-slate-300"></div>
+                        <span className="text-xs font-bold text-slate-500 uppercase">Or Upload File</span>
+                        <div className="flex-1 border-t border-slate-300"></div>
+                    </div>
+
+                    {/* File Upload Section */}
                     <div className="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center hover:border-blue-500 transition-colors">
                         <input
                             type="file"
-                            accept=".pdf"
+                            accept=".pdf,.txt"
                             onChange={handlePDFUpload}
                             className="hidden"
                             id="pdf-upload"
