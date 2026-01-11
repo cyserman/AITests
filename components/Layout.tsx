@@ -33,9 +33,41 @@ export const Layout: React.FC<LayoutProps> = ({
     { id: ActiveLayer.KNOWLEDGE, label: 'Anchor Rules', icon: 'M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z', description: 'Strategic Foundation' }
   ];
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
+    if (!file) return;
+
+    if (file.type === 'application/pdf') {
+      // Handle PDF
+      const arrayBuffer = await file.arrayBuffer();
+      const pdfjsLib = (window as any).pdfjsLib;
+
+      if (!pdfjsLib) {
+        alert('PDF library not loaded. Please refresh the page.');
+        return;
+      }
+
+      try {
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        let fullText = '';
+
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i);
+          const textContent = await page.getTextContent();
+          const pageText = textContent.items.map((item: any) => item.str).join(' ');
+          fullText += pageText + '\n\n';
+        }
+
+        // Create a CSV-like format from PDF text
+        const csvContent = `event_id,date,event_type,short_title,description,source,exhibit_refs,reliability,notes\nPDF-${Date.now()},${new Date().toISOString().split('T')[0]},DOCUMENT,${file.name},${fullText.substring(0, 500).replace(/,/g, ';')},PDF Import,PDF-${Date.now()},Medium,Imported from PDF: ${file.name}`;
+
+        onImport(csvContent);
+      } catch (err) {
+        alert('Failed to extract text from PDF. Please try a different file.');
+        console.error('PDF Error:', err);
+      }
+    } else {
+      // Handle CSV
       const reader = new FileReader();
       reader.onload = (ev) => {
         if (ev.target?.result) onImport(ev.target.result as string);
@@ -46,7 +78,7 @@ export const Layout: React.FC<LayoutProps> = ({
 
   return (
     <div className="flex h-screen bg-[#f1f5f9] overflow-hidden">
-      <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".csv" />
+      <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".csv,.pdf" />
       <aside className={`${isSidebarOpen ? 'w-64' : 'w-20'} bg-[#0f172a] text-white transition-all duration-300 flex flex-col shadow-2xl z-20`}>
         <div className="p-4 flex items-center justify-between border-b border-slate-800">
           {isSidebarOpen && (
